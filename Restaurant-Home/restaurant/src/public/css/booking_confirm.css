@@ -1,0 +1,95 @@
+/* Toàn bộ trang */
+.order-confirm-container {
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Tiêu đề trang */
+.order-confirm-container h1 {
+  font-size: 2rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Phần thông tin đơn hàng */
+.order-info,
+.order-status,
+.user-info,
+.food-info {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Tiêu đề phần */
+h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+/* Nội dung thông tin đơn hàng */
+.order-info p,
+.order-status p,
+.user-info p,
+.food-info p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+/* Phần thông tin món ăn */
+.food-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.food-item img {
+  border-radius: 8px;
+  margin-right: 20px;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.food-item-details {
+  flex: 1;
+}
+
+.food-item-details h5 {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.food-item-details p {
+  margin: 0;
+  color: #777;
+}
+
+/* Nút thanh toán */
+.pay-button {
+  background-color: #28a745;
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  max-width: 200px;
+  margin: 20px auto;
+  display: block;
+}
+
+.pay-button:hover {
+  background-color: #218838;
+}
