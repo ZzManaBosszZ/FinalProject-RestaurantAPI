@@ -121,7 +121,7 @@ function Header() {
                 ) : (
                   <li>
                     <NavLink to="/login">
-                      <i class="fa-solid fa-hands"></i>
+                      <i class="fa-solid fa-user"></i>
                     </NavLink>
                   </li>
                 )}
