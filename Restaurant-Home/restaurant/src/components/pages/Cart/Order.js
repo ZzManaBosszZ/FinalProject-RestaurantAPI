@@ -14,9 +14,7 @@ function Order() {
   }, []);
 
   const handleSubmitOrder = () => {
-    // Gửi thông tin order đến admin hoặc xử lý logic cần thiết
     alert('Order submitted successfully!');
-    // Xóa thông tin đơn hàng khỏi localStorage sau khi submit thành công
     localStorage.removeItem('orderDetails');
   };
 

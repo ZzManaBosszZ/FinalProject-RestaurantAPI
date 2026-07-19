@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 18, 2026 at 07:09 AM
+-- Generation Time: Jul 19, 2026 at 11:02 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -178,7 +178,15 @@ INSERT INTO `food_order_detail` (`id`, `order_detail_id`, `food_id`, `quantity`,
 (49, 112, 54, 1, 5.00, '2024-11-16 08:42:36'),
 (50, 113, 54, 2, 5.00, '2024-11-16 08:44:33'),
 (51, 114, 54, 1, 5.00, '2026-07-18 04:32:16'),
-(52, 115, 55, 1, 5.00, '2026-07-18 04:50:59');
+(52, 115, 55, 1, 5.00, '2026-07-18 04:50:59'),
+(55, 118, 54, 2, 5.00, '2026-07-19 02:26:03'),
+(56, 119, 55, 2, 5.00, '2026-07-19 05:55:41'),
+(57, 120, 55, 3, 5.00, '2026-07-19 05:58:56'),
+(58, 121, 54, 2, 5.00, '2026-07-19 07:55:33'),
+(59, 122, 54, 1, 5.00, '2026-07-19 08:28:11'),
+(60, 122, 53, 1, 10.00, '2026-07-19 08:28:11'),
+(61, 123, 54, 1, 5.00, '2026-07-19 08:52:07'),
+(62, 123, 53, 1, 10.00, '2026-07-19 08:52:07');
 
 -- --------------------------------------------------------
 
@@ -303,7 +311,13 @@ INSERT INTO `orderdetail` (`id`, `order_id`, `food_id`, `discount`, `createddate
 (112, 71, NULL, 0, '2024-11-16 08:42:36', '2024-11-16 08:42:36', 'son', 'son', 1),
 (113, 72, NULL, 0, '2024-11-16 08:44:33', '2024-11-16 08:44:33', 'son', 'son', 1),
 (114, 73, NULL, 0, '2026-07-18 04:32:16', '2026-07-18 04:32:16', 'Phuong', 'Phuong', 8),
-(115, 74, NULL, 0, '2026-07-18 04:50:59', '2026-07-18 04:50:59', 'Phuong', 'Phuong', 8);
+(115, 74, NULL, 0, '2026-07-18 04:50:59', '2026-07-18 04:50:59', 'Phuong', 'Phuong', 8),
+(118, 77, NULL, 999999, '2026-07-19 02:26:03', '2026-07-19 02:26:03', 'Phg', 'Phg', 7),
+(119, 78, NULL, 999999, '2026-07-19 05:55:41', '2026-07-19 05:55:41', 'Phuong', 'Phuong', 8),
+(120, 79, NULL, 999999, '2026-07-19 05:58:56', '2026-07-19 05:58:56', 'Phuong', 'Phuong', 8),
+(121, 80, NULL, NULL, '2026-07-19 07:55:33', '2026-07-19 07:55:33', 'Phuong', 'Phuong', 8),
+(122, 81, NULL, NULL, '2026-07-19 08:28:11', '2026-07-19 08:28:11', 'Phuong', 'Phuong', 8),
+(123, 82, NULL, NULL, '2026-07-19 08:52:07', '2026-07-19 08:52:07', 'Phuong', 'Phuong', 8);
 
 -- --------------------------------------------------------
 
@@ -334,7 +348,13 @@ INSERT INTO `orders` (`id`, `user_id`, `order_code`, `total`, `is_paid`, `status
 (71, 1, '937e75a6-8bba-484b-a58f-39ea92663919', 5, '0', 'paid', 'card', 'son', '2024-11-15 08:42:36', 'son', '2024-11-16 10:30:43'),
 (72, 1, '98d61748-19ab-43de-a145-243c0ec21ed0', 10, '0', 'paid', 'card', 'son', '2024-11-15 08:44:33', 'son', '2024-11-16 10:30:46'),
 (73, 8, '486e2174-7aec-4c7a-815f-bbb2df4b1282', 5, '0', 'paid', 'paypal', 'Phuong', '2026-07-18 04:32:16', 'Phuong', '2026-07-18 04:32:16'),
-(74, 8, 'a11ca757-99c2-4cb7-91aa-3afaef297cd9', 5, '0', 'paid', 'paypal', 'Phuong', '2026-07-18 04:50:59', 'Phuong', '2026-07-18 04:50:59');
+(74, 8, 'a11ca757-99c2-4cb7-91aa-3afaef297cd9', 5, '0', 'paid', 'paypal', 'Phuong', '2026-07-18 04:50:59', 'Phuong', '2026-07-18 04:50:59'),
+(77, 7, 'c1df9686-54a0-48cc-95ae-e8932468f46f', 10, '0', 'pending', 'paypal', 'Phg', '2026-07-19 02:26:03', 'Phg', '2026-07-19 02:26:03'),
+(78, 8, '1fa8b22c-4fb9-41cf-b673-6ec85a7a710d', 10, '0', 'pending', 'paypal', 'Phuong', '2026-07-19 05:55:41', 'Phuong', '2026-07-19 05:55:41'),
+(79, 8, 'db4498b5-27dc-4c07-aa38-c3db552cae7f', 15, '0', 'pending', 'paypal', 'Phuong', '2026-07-19 05:58:56', 'Phuong', '2026-07-19 06:05:10'),
+(80, 8, 'ecca23ba-868e-41a6-a5ba-e7138f4683ec', 10, '0', 'pending', 'paypal', 'Phuong', '2026-07-19 07:55:33', 'Phuong', '2026-07-19 07:55:33'),
+(81, 8, '121ab065-fa74-41bc-a8cf-a46d42025b06', 15, '0', 'pending', 'paypal', 'Phuong', '2026-07-19 08:28:11', 'Phuong', '2026-07-19 08:28:11'),
+(82, 8, 'd2227b84-1968-445d-9ffe-fd0316c16e68', 15, '1', 'paid', 'paypal', 'Phuong', '2026-07-19 08:52:07', 'Phuong', '2026-07-19 08:52:07');
 
 -- --------------------------------------------------------
 
@@ -374,15 +394,34 @@ CREATE TABLE `payment` (
   `id` bigint(20) NOT NULL,
   `payment_method` varchar(255) NOT NULL,
   `is_paid` tinyint(1) NOT NULL,
-  `price` decimal(10,2) NOT NULL,
-  `payment_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `price` decimal(12,2) NOT NULL,
+  `payment_date` datetime DEFAULT NULL,
   `order_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) DEFAULT NULL,
+  `user_id` bigint(20) NOT NULL,
   `createdby` varchar(255) DEFAULT NULL,
   `createddate` timestamp NOT NULL DEFAULT current_timestamp(),
   `modifiedby` varchar(255) DEFAULT NULL,
-  `modifieddate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `modifieddate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `status` varchar(30) NOT NULL DEFAULT 'PENDING',
+  `paypal_order_id` varchar(100) DEFAULT NULL,
+  `paypal_request_id` varchar(100) DEFAULT NULL,
+  `currency` varchar(10) NOT NULL DEFAULT 'USD',
+  `paypal_capture_id` varchar(100) DEFAULT NULL,
+  `capture_request_id` varchar(100) DEFAULT NULL,
+  `failure_reason` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payment`
+--
+
+INSERT INTO `payment` (`id`, `payment_method`, `is_paid`, `price`, `payment_date`, `order_id`, `user_id`, `createdby`, `createddate`, `modifiedby`, `modifieddate`, `status`, `paypal_order_id`, `paypal_request_id`, `currency`, `paypal_capture_id`, `capture_request_id`, `failure_reason`) VALUES
+(1, 'paypal', 0, 10.00, NULL, 77, 7, NULL, '2026-07-19 02:26:39', NULL, '2026-07-19 02:26:39', 'PENDING', NULL, NULL, 'USD', NULL, NULL, NULL),
+(3, 'paypal', 0, 10.00, NULL, 78, 8, NULL, '2026-07-19 05:59:05', NULL, '2026-07-19 05:59:05', 'PENDING', NULL, NULL, 'USD', NULL, NULL, NULL),
+(4, 'paypal', 0, 15.00, NULL, 79, 8, NULL, '2026-07-19 06:00:08', NULL, '2026-07-19 06:00:08', 'PENDING', NULL, NULL, 'USD', NULL, NULL, NULL),
+(5, 'paypal', 0, 10.00, NULL, 80, 8, NULL, '2026-07-19 07:56:41', NULL, '2026-07-19 07:56:41', 'PENDING', '2L508780Y3820504V', 'create-payment-5', 'USD', NULL, NULL, NULL),
+(6, 'paypal', 0, 15.00, NULL, 81, 8, NULL, '2026-07-19 08:28:11', NULL, '2026-07-19 08:28:11', 'PENDING', '6D4741706H583605X', 'create-payment-6', 'USD', NULL, NULL, NULL),
+(7, 'paypal', 1, 15.00, '2026-07-19 15:52:31', 82, 8, NULL, '2026-07-19 08:52:07', NULL, '2026-07-19 08:52:07', 'COMPLETED', '2LH13104W5332161R', 'create-payment-7', 'USD', '1NT557732G0696131', 'capture-payment-7', NULL);
 
 -- --------------------------------------------------------
 
@@ -584,6 +623,8 @@ ALTER TABLE `ordertable`
 --
 ALTER TABLE `payment`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_payment_paypal_order_id` (`paypal_order_id`),
+  ADD UNIQUE KEY `uk_payment_paypal_capture_id` (`paypal_capture_id`),
   ADD KEY `order_id` (`order_id`),
   ADD KEY `user_id` (`user_id`);
 
@@ -662,7 +703,7 @@ ALTER TABLE `food_image`
 -- AUTO_INCREMENT for table `food_order_detail`
 --
 ALTER TABLE `food_order_detail`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `menu`
@@ -686,13 +727,13 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `orderdetail`
 --
 ALTER TABLE `orderdetail`
-  MODIFY `id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `ordertable`
@@ -704,7 +745,7 @@ ALTER TABLE `ordertable`
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `product`

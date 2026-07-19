@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Cookies from "js-cookie";
@@ -61,21 +59,22 @@ function OrderConfirm() {
                 <td><strong>Total:</strong></td>
                 <td>${orderDetail.total}</td>
               </tr>
-              <tr>
+              {/* <tr>
                 <td><strong>Customer Name:</strong></td>
                 <td>{orderDetail.orderDetail.user.fullName}</td>
-              </tr>
+              </tr> */}
               <tr>
                 <td><strong>Email:</strong></td>
                 <td>{orderDetail.orderDetail.user.email}</td>
               </tr>
               <tr>
                 <td><strong>Phone:</strong></td>
-                <td>{orderDetail.orderDetail.user.phone }</td>
+                <td>{orderDetail.customerPhone || "Not provided"}</td>
               </tr>
+
               <tr>
                 <td><strong>Address:</strong></td>
-                <td>{orderDetail.orderDetail.user.address }</td>
+                <td>{orderDetail.deliveryAddress || "Not provided"}</td>
               </tr>
             </tbody>
           </table>
@@ -98,11 +97,11 @@ function OrderConfirm() {
         <div className="order-confirm-note">
           <h3>Note Information</h3>
           <p>
-            Your order has been successfully placed. Please review the details carefully. 
+            Your order has been successfully placed. Please review the details carefully.
             If you have any issues, contact us at <strong>12345678</strong>.
           </p>
           <p>
-            Ensure to track the status of your order in your account or via the provided 
+            Ensure to track the status of your order in your account or via the provided
             email updates. Thank you for choosing us!
           </p>
         </div>
