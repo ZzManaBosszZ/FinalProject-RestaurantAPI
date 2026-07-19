@@ -1,176 +1,479 @@
 import LayoutPages from "../../layouts/LayoutPage";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import BreadCrumb from "../../layouts/BreadCrumb";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "../../../public/css/cart.css";
 
 function CartTab() {
-  const [cartItems, setCartItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState(new Set());
-  const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
 
+  const breadcrumbPath = [
+    { href: "/", label: "Home" },
+    { href: "/shop", label: "Shop" },
+    { href: "/cart", label: "Cart" },
+  ];
+
+  const [cartItems, setCartItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+
   useEffect(() => {
-    const loadCartItems = () => {
+    try {
       const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      setCartItems(cart);
-    };
-    loadCartItems();
+      setCartItems(Array.isArray(cart) ? cart : []);
+    } catch (error) {
+      console.error("Error loading cart:", error);
+      setCartItems([]);
+    }
   }, []);
 
-  useEffect(() => {
-    if (selectAll) {
-      setSelectedItems(new Set(cartItems.map((item) => item.id)));
-    } else {
-      setSelectedItems(new Set());
-    }
-  }, [selectAll, cartItems]);
-
-  const handleQuantityChange = (id, newQuantity) => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    cart = cart.map((item) =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    );
+  const saveCart = (cart) => {
     localStorage.setItem("cart", JSON.stringify(cart));
     setCartItems(cart);
-
-    // Nếu sản phẩm đã chọn, vẫn giữ trạng thái đã chọn
-    if (newQuantity > 0) {
-      const newSelectedItems = new Set(selectedItems);
-      newSelectedItems.add(id);
-      setSelectedItems(newSelectedItems);
-    }
   };
 
-  const handleRemoveItem = (id) => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    cart = cart.filter((item) => item.id !== id);
-    localStorage.setItem("cart", JSON.stringify(cart));
-    setCartItems(cart);
-    setSelectedItems((prev) => {
-      const newSelectedItems = new Set(prev);
-      newSelectedItems.delete(id);
-      return newSelectedItems;
+  const isSelectAll =
+    cartItems.length > 0 &&
+    selectedItems.size === cartItems.length;
+
+  const handleSelectAllChange = () => {
+    if (isSelectAll) {
+      setSelectedItems(new Set());
+      return;
+    }
+
+    setSelectedItems(
+      new Set(cartItems.map((item) => item.id))
+    );
+  };
+
+  const handleItemSelect = (id) => {
+    setSelectedItems((previousItems) => {
+      const nextItems = new Set(previousItems);
+
+      if (nextItems.has(id)) {
+        nextItems.delete(id);
+      } else {
+        nextItems.add(id);
+      }
+
+      return nextItems;
     });
   };
 
-  const handleRowClick = (id) => {
-    const newSelectedItems = new Set(selectedItems);
-    if (newSelectedItems.has(id)) {
-      newSelectedItems.delete(id);
-    } else {
-      newSelectedItems.add(id);
-    }
-    setSelectedItems(newSelectedItems);
+  const handleQuantityChange = (id, value) => {
+    const parsedQuantity = Number.parseInt(value, 10);
+    const nextQuantity =
+      Number.isNaN(parsedQuantity) || parsedQuantity < 1
+        ? 1
+        : parsedQuantity;
+
+    const updatedCart = cartItems.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity: nextQuantity,
+          }
+        : item
+    );
+
+    saveCart(updatedCart);
   };
 
-  const handleSelectAllChange = () => {
-    setSelectAll(!selectAll);
+  const increaseQuantity = (id) => {
+    const updatedCart = cartItems.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity: Number(item.quantity || 1) + 1,
+          }
+        : item
+    );
+
+    saveCart(updatedCart);
   };
 
-  const getTotalPrice = () => {
-    const total = cartItems
-      .filter((item) => selectedItems.has(item.id))
-      .reduce((total, item) => total + item.price * item.quantity, 0);
-    return total.toFixed(2);
+  const decreaseQuantity = (id) => {
+    const updatedCart = cartItems.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity: Math.max(
+              1,
+              Number(item.quantity || 1) - 1
+            ),
+          }
+        : item
+    );
+
+    saveCart(updatedCart);
+  };
+
+  const handleRemoveItem = (id) => {
+    const updatedCart = cartItems.filter(
+      (item) => item.id !== id
+    );
+
+    saveCart(updatedCart);
+
+    setSelectedItems((previousItems) => {
+      const nextItems = new Set(previousItems);
+      nextItems.delete(id);
+      return nextItems;
+    });
+  };
+
+  const selectedCartItems = cartItems.filter((item) =>
+    selectedItems.has(item.id)
+  );
+
+  const selectedQuantity = selectedCartItems.reduce(
+    (total, item) =>
+      total + Number(item.quantity || 0),
+    0
+  );
+
+  const totalPrice = selectedCartItems.reduce(
+    (total, item) =>
+      total +
+      Number(item.price || 0) *
+        Number(item.quantity || 0),
+    0
+  );
+
+  const formatPrice = (value) => {
+    return Number(value || 0).toFixed(2);
   };
 
   const handleCheckout = () => {
-    const selectedCartItems = cartItems.filter((item) =>
-      selectedItems.has(item.id)
+    if (selectedCartItems.length === 0) {
+      return;
+    }
+
+    localStorage.setItem(
+      "selectedCartItems",
+      JSON.stringify(selectedCartItems)
     );
-    localStorage.setItem("selectedCartItems", JSON.stringify(selectedCartItems));
+
     navigate("/check_out");
   };
 
   return (
     <LayoutPages showBreadCrumb={false}>
-      <div className="cart-tab-container">
-        <div className="cart-tab-content">
-          <h2 className="cart-tab-title">Your Cart</h2>
-          {cartItems.length > 0 ? (
-            <div className="cart-tab-items">
-              <div className="cart-tab-select-actions">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAllChange}
-                  />
-                  Select All Items
-                </label>
+      <BreadCrumb
+        title="Shopping Cart"
+        path={breadcrumbPath}
+      />
+
+      <section className="cart-page-section">
+        <div className="cart-page-wrapper">
+          <div className="cart-page-heading">
+            <div>
+              <span className="cart-page-subtitle">
+                Your selections
+              </span>
+
+              <h2>Shopping Cart</h2>
+
+              <p>
+                Review your selected food items and adjust their
+                quantities before checkout.
+              </p>
+            </div>
+
+            <div className="cart-count-card">
+              <div className="cart-count-icon">
+                <i className="fa fa-shopping-basket"></i>
               </div>
-              <table className="cart-tab-table">
-                <thead>
-                  <tr>
-                    <th className="cart-tab-header">Select</th>
-                    <th className="cart-tab-header">Image</th>
-                    <th className="cart-tab-header">Name</th>
-                    <th className="cart-tab-header">Price</th>
-                    <th className="cart-tab-header">Quantity</th>
-                    <th className="cart-tab-header">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cartItems.map((item) => (
-                    <tr
-                      key={item.id}
-                      className={`cart-tab-item ${
-                        selectedItems.has(item.id) ? "selected" : ""
-                      }`}
-                      onClick={() => handleRowClick(item.id)}
-                    >
-                      <td className="cart-tab-select">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(item.id)}
-                          onChange={() => handleRowClick(item.id)}
-                          onClick={(e) => e.stopPropagation()} // Ngăn sự kiện click trùng
-                        />
-                      </td>
-                      <td className="cart-tab-image">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          style={{ width: "100px" }}
-                        />
-                      </td>
-                      <td className="cart-tab-name">{item.name}</td>
-                      <td className="cart-tab-price">${item.price}</td>
-                      <td className="cart-tab-quantity">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          min="1"
-                          onChange={(e) =>
-                            handleQuantityChange(item.id, parseInt(e.target.value))
-                          }
-                          onClick={(e) => e.stopPropagation()} // Ngăn sự kiện click trùng
-                        />
-                      </td>
-                      <td className="cart-tab-actions">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Ngăn sự kiện click trùng
-                            handleRemoveItem(item.id);
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="cart-tab-total">
-                <h3>Total Price: ${getTotalPrice()}</h3>
-                <button onClick={handleCheckout}>Check out</button>
+
+              <div>
+                <span>Cart items</span>
+                <strong>{cartItems.length}</strong>
               </div>
             </div>
+          </div>
+
+          {cartItems.length > 0 ? (
+            <div className="cart-page-layout">
+              <main className="cart-products-column">
+                <div className="cart-selection-toolbar">
+                  <label className="cart-select-all">
+                    <input
+                      type="checkbox"
+                      checked={isSelectAll}
+                      onChange={handleSelectAllChange}
+                    />
+
+                    <span className="cart-custom-checkbox">
+                      <i className="fa fa-check"></i>
+                    </span>
+
+                    <span>
+                      Select all products
+                    </span>
+                  </label>
+
+                  <span className="cart-selected-count">
+                    {selectedItems.size} selected
+                  </span>
+                </div>
+
+                <div className="cart-product-list">
+                  {cartItems.map((item) => {
+                    const isSelected =
+                      selectedItems.has(item.id);
+
+                    const quantity =
+                      Number(item.quantity) || 1;
+
+                    const subtotal =
+                      Number(item.price || 0) *
+                      quantity;
+
+                    return (
+                      <article
+                        key={item.id}
+                        className={`cart-product-card ${
+                          isSelected
+                            ? "cart-product-selected"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          handleItemSelect(item.id)
+                        }
+                      >
+                        <div className="cart-product-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() =>
+                              handleItemSelect(item.id)
+                            }
+                            onClick={(event) =>
+                              event.stopPropagation()
+                            }
+                          />
+
+                          <span className="cart-custom-checkbox">
+                            <i className="fa fa-check"></i>
+                          </span>
+                        </div>
+
+                        <div className="cart-product-image">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name || "Food"}
+                            />
+                          ) : (
+                            <div className="cart-image-placeholder">
+                              <i className="fa fa-cutlery"></i>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="cart-product-content">
+                          <div className="cart-product-top">
+                            <div>
+                              <span className="cart-product-label">
+                                Food item
+                              </span>
+
+                              <h3>
+                                {item.name ||
+                                  "Unnamed product"}
+                              </h3>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="cart-remove-button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleRemoveItem(item.id);
+                              }}
+                              aria-label={`Remove ${
+                                item.name || "item"
+                              }`}
+                            >
+                              <i className="fa fa-trash"></i>
+                            </button>
+                          </div>
+
+                          <div className="cart-product-bottom">
+                            <div className="cart-product-price">
+                              <span>Unit price</span>
+
+                              <strong>
+                                ${formatPrice(item.price)}
+                              </strong>
+                            </div>
+
+                            <div
+                              className="cart-quantity-control"
+                              onClick={(event) =>
+                                event.stopPropagation()
+                              }
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  decreaseQuantity(item.id)
+                                }
+                              >
+                                <i className="fa fa-minus"></i>
+                              </button>
+
+                              <input
+                                type="number"
+                                min="1"
+                                value={quantity}
+                                onChange={(event) =>
+                                  handleQuantityChange(
+                                    item.id,
+                                    event.target.value
+                                  )
+                                }
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  increaseQuantity(item.id)
+                                }
+                              >
+                                <i className="fa fa-plus"></i>
+                              </button>
+                            </div>
+
+                            <div className="cart-product-subtotal">
+                              <span>Subtotal</span>
+
+                              <strong>
+                                ${formatPrice(subtotal)}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </main>
+
+              <aside className="cart-summary-column">
+                <div className="cart-summary-card">
+                  <span className="cart-summary-label">
+                    Payment summary
+                  </span>
+
+                  <h3>Order Summary</h3>
+
+                  <div className="cart-summary-row">
+                    <span>Selected products</span>
+                    <strong>
+                      {selectedCartItems.length}
+                    </strong>
+                  </div>
+
+                  <div className="cart-summary-row">
+                    <span>Total quantity</span>
+                    <strong>{selectedQuantity}</strong>
+                  </div>
+
+                  <div className="cart-summary-row">
+                    <span>Delivery fee</span>
+                    <strong className="cart-free-text">
+                      Free
+                    </strong>
+                  </div>
+
+                  <div className="cart-summary-divider"></div>
+
+                  <div className="cart-summary-total">
+                    <span>Total</span>
+
+                    <strong>
+                      ${formatPrice(totalPrice)}
+                    </strong>
+                  </div>
+
+                  {selectedCartItems.length === 0 && (
+                    <div className="cart-selection-warning">
+                      <i className="fa fa-info-circle"></i>
+                      Select at least one item to checkout.
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="cart-checkout-button"
+                    disabled={
+                      selectedCartItems.length === 0
+                    }
+                    onClick={handleCheckout}
+                  >
+                    Proceed to Checkout
+                    <i className="fa fa-arrow-right"></i>
+                  </button>
+
+                  <Link
+                    to="/shop"
+                    className="cart-continue-button"
+                  >
+                    <i className="fa fa-arrow-left"></i>
+                    Continue Shopping
+                  </Link>
+
+                  <div className="cart-secure-note">
+                    <i className="fa fa-lock"></i>
+
+                    <span>
+                      Secure checkout and protected payment.
+                    </span>
+                  </div>
+                </div>
+              </aside>
+            </div>
           ) : (
-            <p className="cart-tab-empty">Your cart is empty.</p>
+            <div className="cart-empty-state">
+              <div className="cart-empty-icon">
+                <i className="fa fa-shopping-cart"></i>
+              </div>
+
+              <h3>Your cart is empty</h3>
+
+              <p>
+                Add your favorite food items and they will appear
+                here.
+              </p>
+
+              <Link
+                to="/shop"
+                className="cart-shop-button"
+              >
+                <i className="fa fa-cutlery"></i>
+                Explore Menu
+              </Link>
+            </div>
           )}
+
+          <div className="cart-help-card">
+            <div className="cart-help-icon">
+              <i className="fa fa-headphones"></i>
+            </div>
+
+            <div>
+              <h3>Need help with your cart?</h3>
+
+              <p>
+                Contact our support team at{" "}
+                <strong>12345678</strong> if you experience any
+                issues while ordering.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </LayoutPages>
   );
 }

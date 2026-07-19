@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -8,11 +8,21 @@ import url from "../../../services/url";
 import { getAccessToken } from "../../../utils/auth";
 
 import LayoutPages from "../../layouts/LayoutPage";
+import BreadCrumb from "../../layouts/BreadCrumb";
 import Payment from "../../Payment/index";
 
 import "../../../public/css/checkout.css";
 
 function CheckOut() {
+  const navigate = useNavigate();
+
+  const breadcrumbPath = [
+    { href: "/", label: "Home" },
+    { href: "/shop", label: "Shop" },
+    { href: "/cart", label: "Cart" },
+    { href: "/check_out", label: "Checkout" },
+  ];
+
   const [customerInfo, setCustomerInfo] = useState({
     fullName: "",
     phone: "",
@@ -24,19 +34,16 @@ function CheckOut() {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
 
-  const [restaurantOrderId, setRestaurantOrderId] = useState(null);
-  const [paymentId, setPaymentId] = useState(null);
-  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [restaurantOrderId, setRestaurantOrderId] =
+    useState(null);
 
-  /*
-   * Dùng ref để tránh tạo nhiều order/payment khi PayPal
-   * gọi createOrder nhiều lần hoặc người dùng bấm nhanh.
-   */
+  const [paymentId, setPaymentId] = useState(null);
+  const [isCreatingPayment, setIsCreatingPayment] =
+    useState(false);
+
   const restaurantOrderIdRef = useRef(null);
   const paymentIdRef = useRef(null);
   const creatingPayPalOrderRef = useRef(false);
-
-  const navigate = useNavigate();
 
   const getHeaderConfig = () => ({
     headers: {
@@ -53,16 +60,13 @@ function CheckOut() {
           getHeaderConfig()
         );
 
+        const profile = response.data?.data || {};
+
         setCustomerInfo((previous) => ({
           ...previous,
-          ...response.data.data,
-
-          /*
-           * Không để profile ghi đè paymentMethod mặc định
-           * nếu API không trả trường này.
-           */
+          ...profile,
           paymentMethod:
-            response.data.data?.paymentMethod ||
+            profile.paymentMethod ||
             previous.paymentMethod ||
             "card",
         }));
@@ -71,7 +75,7 @@ function CheckOut() {
 
         toast.error(
           error.response?.data?.message ||
-          "Cannot load your profile information."
+            "Cannot load your profile information."
         );
       }
     };
@@ -83,17 +87,19 @@ function CheckOut() {
             localStorage.getItem("selectedCartItems")
           ) || [];
 
-        setCartItems(selectedCartItems);
+        const normalizedItems = Array.isArray(
+          selectedCartItems
+        )
+          ? selectedCartItems
+          : [];
 
-        /*
-         * totalPrice chỉ dùng để hiển thị.
-         * Backend vẫn phải tự lấy giá món và tính lại total.
-         */
-        const displayTotal = selectedCartItems.reduce(
+        setCartItems(normalizedItems);
+
+        const displayTotal = normalizedItems.reduce(
           (sum, item) =>
             sum +
             Number(item.price || 0) *
-            Number(item.quantity || 0),
+              Number(item.quantity || 0),
           0
         );
 
@@ -129,10 +135,6 @@ function CheckOut() {
       paymentMethod,
     }));
 
-    /*
-     * Khi đổi phương thức thanh toán, reset dữ liệu nhập
-     * và trạng thái PayPal cũ của lần checkout hiện tại.
-     */
     setPaymentDetails("");
 
     if (paymentMethod !== "paypal") {
@@ -146,63 +148,69 @@ function CheckOut() {
 
   const getSelectedCartItems = () => {
     try {
-      return (
+      const selectedCartItems =
         JSON.parse(
           localStorage.getItem("selectedCartItems")
-        ) || []
-      );
+        ) || [];
+
+      return Array.isArray(selectedCartItems)
+        ? selectedCartItems
+        : [];
     } catch (error) {
-      console.error("Invalid selectedCartItems:", error);
+      console.error(
+        "Invalid selectedCartItems:",
+        error
+      );
+
       return [];
     }
   };
 
- const validateCheckout = () => {
-  const selectedCartItems = getSelectedCartItems();
+  const validateCheckout = () => {
+    const selectedCartItems = getSelectedCartItems();
 
-  if (selectedCartItems.length === 0) {
-    toast.error("Please select at least one item.");
-    return null;
-  }
+    if (selectedCartItems.length === 0) {
+      toast.error("Please select at least one item.");
+      return null;
+    }
 
-  if (!customerInfo.fullName?.trim()) {
-    toast.error("Name is required.");
-    return null;
-  }
+    if (!customerInfo.fullName?.trim()) {
+      toast.error("Name is required.");
+      return null;
+    }
 
-  if (!customerInfo.phone?.trim()) {
-    toast.error("Phone number is required.");
-    return null;
-  }
+    if (!customerInfo.phone?.trim()) {
+      toast.error("Phone number is required.");
+      return null;
+    }
 
-  if (!customerInfo.address?.trim()) {
-    toast.error("Address is required.");
-    return null;
-  }
+    if (!customerInfo.address?.trim()) {
+      toast.error("Address is required.");
+      return null;
+    }
 
-  const invalidItem = selectedCartItems.find(
-    (item) =>
-      !item.id ||
-      !item.quantity ||
-      Number(item.quantity) <= 0
-  );
+    const invalidItem = selectedCartItems.find(
+      (item) =>
+        !item.id ||
+        !item.quantity ||
+        Number(item.quantity) <= 0
+    );
 
-  if (invalidItem) {
-    toast.error("One or more cart items are invalid.");
-    return null;
-  }
+    if (invalidItem) {
+      toast.error(
+        "One or more cart items are invalid."
+      );
 
-  return selectedCartItems;
-};
+      return null;
+    }
+
+    return selectedCartItems;
+  };
 
   const buildOrderPayload = (
     selectedCartItems,
     paymentMethod
   ) => ({
-    /*
-     * Không gửi price, total, isPaid hoặc status.
-     * Backend tự lấy giá từ database và tính total.
-     */
     foodQuantities: selectedCartItems.map((item) => ({
       foodId: item.id,
       quantity: Number(item.quantity),
@@ -254,60 +262,49 @@ function CheckOut() {
     setIsCreatingPayment(false);
   };
 
-  /*
-   * Tạo order nội bộ trong database.
-   *
-   * Order sau khi tạo phải:
-   * status = pending
-   * isPaid = false
-   */
   const createRestaurantOrder = async (
-  paymentMethod = "paypal"
-) => {
-  if (restaurantOrderIdRef.current) {
-    return restaurantOrderIdRef.current;
-  }
+    paymentMethod = "paypal"
+  ) => {
+    if (restaurantOrderIdRef.current) {
+      return restaurantOrderIdRef.current;
+    }
 
-  const selectedCartItems = validateCheckout();
+    const selectedCartItems = validateCheckout();
 
-  if (!selectedCartItems) {
-    throw new Error("Checkout information is incomplete.");
-  }
+    if (!selectedCartItems) {
+      throw new Error(
+        "Checkout information is incomplete."
+      );
+    }
 
-  const payload = buildOrderPayload(
-    selectedCartItems,
-    paymentMethod
-  );
-
-  const response = await api.post(
-    url.ORDER.CREATE,
-    payload,
-    getHeaderConfig()
-  );
-
-  const orderData = response.data?.data;
-
-  const orderId =
-    orderData?.id || orderData?.orderId;
-
-  if (!orderId) {
-    throw new Error(
-      "Backend did not return the restaurant order ID."
+    const payload = buildOrderPayload(
+      selectedCartItems,
+      paymentMethod
     );
-  }
 
-  restaurantOrderIdRef.current = orderId;
-  setRestaurantOrderId(orderId);
+    const response = await api.post(
+      url.ORDER.CREATE,
+      payload,
+      getHeaderConfig()
+    );
 
-  return orderId;
-};
-console.log("customerInfo:", customerInfo);
-  /*
-   * Tạo bản ghi Payment PENDING.
-   *
-   * Backend phải lấy price từ order.getTotal(),
-   * không lấy giá từ request frontend.
-   */
+    const orderData = response.data?.data;
+
+    const orderId =
+      orderData?.id || orderData?.orderId;
+
+    if (!orderId) {
+      throw new Error(
+        "Backend did not return the restaurant order ID."
+      );
+    }
+
+    restaurantOrderIdRef.current = orderId;
+    setRestaurantOrderId(orderId);
+
+    return orderId;
+  };
+
   const initializePayment = async (orderId) => {
     if (paymentIdRef.current) {
       return paymentIdRef.current;
@@ -339,11 +336,6 @@ console.log("customerInfo:", customerInfo);
     return newPaymentId;
   };
 
-  /*
-   * Gọi backend để backend gọi PayPal Orders API.
-   *
-   * Hàm này trả PayPal Order ID cho PayPalButtons.
-   */
   const createPayPalOrder = async () => {
     if (creatingPayPalOrderRef.current) {
       throw new Error(
@@ -367,6 +359,7 @@ console.log("customerInfo:", customerInfo);
       );
 
       const paypalData = response.data?.data;
+
       const paypalOrderId =
         paypalData?.paypalOrderId;
 
@@ -385,8 +378,8 @@ console.log("customerInfo:", customerInfo);
 
       toast.error(
         error.response?.data?.message ||
-        error.message ||
-        "Cannot create PayPal order."
+          error.message ||
+          "Cannot create PayPal order."
       );
 
       throw error;
@@ -397,32 +390,32 @@ console.log("customerInfo:", customerInfo);
   };
 
   const handlePayPalSuccess = async (
-  captureResult
-) => {
-  if (
-    captureResult?.paymentStatus !==
-    "COMPLETED"
-  ) {
-    toast.error(
-      "PayPal payment has not been completed."
+    captureResult
+  ) => {
+    if (
+      captureResult?.paymentStatus !== "COMPLETED"
+    ) {
+      toast.error(
+        "PayPal payment has not been completed."
+      );
+
+      return;
+    }
+
+    const orderId =
+      captureResult.orderId ||
+      restaurantOrderIdRef.current;
+
+    removePurchasedItemsFromLocalStorage();
+
+    toast.success(
+      "Your payment was completed successfully!"
     );
-    return;
-  }
 
-  const orderId =
-    captureResult.orderId ||
-    restaurantOrderIdRef.current;
+    resetPayPalCheckoutState();
 
-  removePurchasedItemsFromLocalStorage();
-
-  toast.success(
-    "Your payment was completed successfully!"
-  );
-
-  resetPayPalCheckoutState();
-
-  navigate(`/order_confirm/${orderId}`);
-};
+    navigate(`/order_confirm/${orderId}`);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -432,9 +425,10 @@ console.log("customerInfo:", customerInfo);
     }
 
     try {
-      const orderId = await createRestaurantOrder(
-        customerInfo.paymentMethod
-      );
+      const orderId =
+        await createRestaurantOrder(
+          customerInfo.paymentMethod
+        );
 
       removePurchasedItemsFromLocalStorage();
 
@@ -446,189 +440,535 @@ console.log("customerInfo:", customerInfo);
 
       setTimeout(() => {
         navigate(`/order_confirm/${orderId}`);
-      }, 1000);
+      }, 800);
     } catch (error) {
       console.error("Create order failed:", error);
 
       toast.error(
         error.response?.data?.message ||
-        error.message ||
-        "There was an error creating your order."
+          error.message ||
+          "There was an error creating your order."
       );
     }
   };
 
+  const formatPrice = (value) => {
+    return Number(value || 0).toFixed(2);
+  };
+
+  const totalQuantity = cartItems.reduce(
+    (total, item) =>
+      total + Number(item.quantity || 0),
+    0
+  );
+
+  if (cartItems.length === 0) {
+    return (
+      <LayoutPages showBreadCrumb={false}>
+        <BreadCrumb
+          title="Checkout"
+          path={breadcrumbPath}
+        />
+
+        <section className="checkout-page-section">
+          <div className="checkout-page-wrapper">
+            <div className="checkout-empty-state">
+              <div className="checkout-empty-icon">
+                <i className="fa fa-shopping-cart"></i>
+              </div>
+
+              <h2>No products selected</h2>
+
+              <p>
+                Return to your cart and select at least one
+                product before continuing to checkout.
+              </p>
+
+              <Link
+                to="/cart"
+                className="checkout-return-cart-button"
+              >
+                <i className="fa fa-arrow-left"></i>
+                Return to Cart
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <ToastContainer />
+      </LayoutPages>
+    );
+  }
+
   return (
     <LayoutPages showBreadCrumb={false}>
-      <div className="checkout-area default-padding">
-        <div className="container">
-          <div className="checkout-content">
-            <h2>Checkout</h2>
+      <BreadCrumb
+        title="Checkout"
+        path={breadcrumbPath}
+      />
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="fullName">Name</label>
+      <section className="checkout-page-section">
+        <div className="checkout-page-wrapper">
+          <div className="checkout-page-heading">
+            <div>
+              <span className="checkout-page-subtitle">
+                Complete your purchase
+              </span>
 
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={customerInfo.fullName || ""}
-                  onChange={handleChange}
-                  required
-                />
+              <h2>Checkout</h2>
+
+              <p>
+                Enter your delivery information and choose a
+                payment method to complete your order.
+              </p>
+            </div>
+
+            <div className="checkout-secure-card">
+              <div className="checkout-secure-icon">
+                <i className="fa fa-lock"></i>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="phone">
-                  Phone Number
-                </label>
-
-                <input
-                  type="text"
-                  id="phone"
-                  name="phone"
-                  value={customerInfo.phone || ""}
-                  onChange={handleChange}
-                  required
-                />
+              <div>
+                <span>Secure checkout</span>
+                <strong>Protected payment</strong>
               </div>
+            </div>
+          </div>
 
-              <div className="form-group">
-                <label htmlFor="address">
-                  Address
-                </label>
+          <form
+            onSubmit={handleSubmit}
+            className="checkout-page-layout"
+          >
+            <main className="checkout-main-column">
+              <article className="checkout-card">
+                <div className="checkout-card-heading">
+                  <div className="checkout-card-heading-icon">
+                    <i className="fa fa-user"></i>
+                  </div>
 
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={customerInfo.address || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+                  <div>
+                    <span>Customer details</span>
+                    <h3>Delivery Information</h3>
+                  </div>
+                </div>
 
-              <div className="form-group">
-                <label>Payment Method</label>
+                <div className="checkout-form-grid">
+                  <div className="checkout-form-group checkout-full-width">
+                    <label htmlFor="fullName">
+                      Full name
+                    </label>
 
-                <select
-                  name="paymentMethod"
-                  value={
-                    customerInfo.paymentMethod || "card"
-                  }
-                  onChange={
-                    handlePaymentMethodChange
-                  }
-                >
-                  <option value="card">
-                    Credit/Debit Card
-                  </option>
+                    <div className="checkout-input-wrapper">
+                      <i className="fa fa-user"></i>
 
-                  <option value="bank">
-                    Bank Transfer
-                  </option>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        value={
+                          customerInfo.fullName || ""
+                        }
+                        onChange={handleChange}
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                  <option value="paypal">
-                    PayPal
-                  </option>
-                </select>
-              </div>
+                  <div className="checkout-form-group">
+                    <label htmlFor="phone">
+                      Phone number
+                    </label>
 
-              {(customerInfo.paymentMethod === "card" ||
-                customerInfo.paymentMethod === "bank") && (
-                  <div className="payment-details-container">
-                    {customerInfo.paymentMethod ===
-                      "card" && (
-                        <div className="form-group">
-                          <label htmlFor="paymentDetails">
-                            Card Details
-                          </label>
+                    <div className="checkout-input-wrapper">
+                      <i className="fa fa-phone"></i>
 
-                          <input
-                            type="text"
-                            id="paymentDetails"
-                            value={paymentDetails}
-                            onChange={
-                              handlePaymentDetailsChange
-                            }
-                            required
-                          />
-                        </div>
-                      )}
+                      <input
+                        type="text"
+                        id="phone"
+                        name="phone"
+                        value={
+                          customerInfo.phone || ""
+                        }
+                        onChange={handleChange}
+                        placeholder="Enter phone number"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                    {customerInfo.paymentMethod ===
-                      "bank" && (
-                        <div className="form-group">
-                          <label htmlFor="paymentDetails">
-                            Bank Transfer Instructions
-                          </label>
+                  <div className="checkout-form-group">
+                    <label htmlFor="address">
+                      Delivery address
+                    </label>
 
-                          <textarea
-                            id="paymentDetails"
-                            value={paymentDetails}
-                            onChange={
-                              handlePaymentDetailsChange
-                            }
-                            required
-                          />
-                        </div>
-                      )}
+                    <div className="checkout-input-wrapper">
+                      <i className="fa fa-map-marker"></i>
+
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={
+                          customerInfo.address || ""
+                        }
+                        onChange={handleChange}
+                        placeholder="Enter delivery address"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article className="checkout-card">
+                <div className="checkout-card-heading">
+                  <div className="checkout-card-heading-icon">
+                    <i className="fa fa-credit-card"></i>
+                  </div>
+
+                  <div>
+                    <span>Payment</span>
+                    <h3>Payment Method</h3>
+                  </div>
+                </div>
+
+                <div className="checkout-payment-options">
+                  <label
+                    className={`checkout-payment-option ${
+                      customerInfo.paymentMethod === "card"
+                        ? "checkout-payment-selected"
+                        : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={
+                        customerInfo.paymentMethod === "card"
+                      }
+                      onChange={
+                        handlePaymentMethodChange
+                      }
+                    />
+
+                    <div className="checkout-payment-icon">
+                      <i className="fa fa-credit-card"></i>
+                    </div>
+
+                    <div>
+                      <strong>Credit / Debit Card</strong>
+                      <span>
+                        Pay using your bank card
+                      </span>
+                    </div>
+
+                    <div className="checkout-payment-radio">
+                      <span></span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`checkout-payment-option ${
+                      customerInfo.paymentMethod === "bank"
+                        ? "checkout-payment-selected"
+                        : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="bank"
+                      checked={
+                        customerInfo.paymentMethod === "bank"
+                      }
+                      onChange={
+                        handlePaymentMethodChange
+                      }
+                    />
+
+                    <div className="checkout-payment-icon">
+                      <i className="fa fa-university"></i>
+                    </div>
+
+                    <div>
+                      <strong>Bank Transfer</strong>
+                      <span>
+                        Transfer directly from your bank
+                      </span>
+                    </div>
+
+                    <div className="checkout-payment-radio">
+                      <span></span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`checkout-payment-option ${
+                      customerInfo.paymentMethod === "paypal"
+                        ? "checkout-payment-selected"
+                        : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="paypal"
+                      checked={
+                        customerInfo.paymentMethod ===
+                        "paypal"
+                      }
+                      onChange={
+                        handlePaymentMethodChange
+                      }
+                    />
+
+                    <div className="checkout-payment-icon">
+                      <i className="fa fa-paypal"></i>
+                    </div>
+
+                    <div>
+                      <strong>PayPal</strong>
+                      <span>
+                        Pay securely with PayPal
+                      </span>
+                    </div>
+
+                    <div className="checkout-payment-radio">
+                      <span></span>
+                    </div>
+                  </label>
+                </div>
+
+                {customerInfo.paymentMethod === "card" && (
+                  <div className="checkout-payment-details">
+                    <div className="checkout-form-group checkout-full-width">
+                      <label htmlFor="paymentDetails">
+                        Card details
+                      </label>
+
+                      <div className="checkout-input-wrapper">
+                        <i className="fa fa-credit-card"></i>
+
+                        <input
+                          type="text"
+                          id="paymentDetails"
+                          value={paymentDetails}
+                          onChange={
+                            handlePaymentDetailsChange
+                          }
+                          placeholder="Enter card information"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 
-              <div className="order-summary_checkout">
+                {customerInfo.paymentMethod === "bank" && (
+                  <div className="checkout-payment-details">
+                    <div className="checkout-form-group checkout-full-width">
+                      <label htmlFor="paymentDetails">
+                        Bank transfer information
+                      </label>
+
+                      <textarea
+                        id="paymentDetails"
+                        value={paymentDetails}
+                        onChange={
+                          handlePaymentDetailsChange
+                        }
+                        placeholder="Enter transfer information"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {customerInfo.paymentMethod ===
+                  "paypal" && (
+                  <div className="checkout-paypal-container">
+                    <div className="checkout-paypal-notice">
+                      <i className="fa fa-info-circle"></i>
+
+                      <span>
+                        Confirm your delivery information before
+                        clicking the PayPal button.
+                      </span>
+                    </div>
+
+                    {isCreatingPayment && (
+                      <div className="checkout-payment-loading">
+                        <div className="checkout-small-spinner"></div>
+                        <span>
+                          Preparing PayPal payment...
+                        </span>
+                      </div>
+                    )}
+
+                    <Payment
+                      createPayPalOrder={createPayPalOrder}
+                      handleEventPayPal={
+                        handlePayPalSuccess
+                      }
+                      handlePaymentCancel={() => {
+                        toast.info(
+                          "Payment was cancelled."
+                        );
+                      }}
+                      handlePaymentError={(error) => {
+                        console.error(error);
+
+                        toast.error(
+                          "PayPal payment error."
+                        );
+                      }}
+                      restaurantOrderId={
+                        restaurantOrderId
+                      }
+                      isCreatingPayment={
+                        isCreatingPayment
+                      }
+                    />
+                  </div>
+                )}
+              </article>
+            </main>
+
+            <aside className="checkout-summary-column">
+              <div className="checkout-summary-card">
+                <span className="checkout-summary-label">
+                  Your order
+                </span>
+
                 <h3>Order Summary</h3>
 
-                <ul>
-                  {cartItems.map((item) => (
-                    <li key={item.id}>
-                      {item.name} x {item.quantity} - $
-                      {(
-                        Number(item.price || 0) *
-                        Number(item.quantity || 0)
-                      ).toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
+                <div className="checkout-summary-items">
+                  {cartItems.map((item) => {
+                    const quantity =
+                      Number(item.quantity || 0);
 
-                <p>
-                  Total: ${Number(totalPrice).toFixed(2)}
-                </p>
+                    const subtotal =
+                      Number(item.price || 0) *
+                      quantity;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="checkout-summary-item"
+                      >
+                        <div className="checkout-summary-image">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={
+                                item.name || "Food"
+                              }
+                            />
+                          ) : (
+                            <div className="checkout-image-placeholder">
+                              <i className="fa fa-cutlery"></i>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="checkout-summary-item-info">
+                          <strong>
+                            {item.name ||
+                              "Unnamed product"}
+                          </strong>
+
+                          <span>
+                            ${formatPrice(item.price)} ×{" "}
+                            {quantity}
+                          </span>
+                        </div>
+
+                        <strong className="checkout-summary-item-price">
+                          ${formatPrice(subtotal)}
+                        </strong>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="checkout-summary-divider"></div>
+
+                <div className="checkout-summary-row">
+                  <span>Products</span>
+                  <strong>{cartItems.length}</strong>
+                </div>
+
+                <div className="checkout-summary-row">
+                  <span>Total quantity</span>
+                  <strong>{totalQuantity}</strong>
+                </div>
+
+                <div className="checkout-summary-row">
+                  <span>Delivery fee</span>
+                  <strong className="checkout-free-text">
+                    Free
+                  </strong>
+                </div>
+
+                <div className="checkout-summary-divider"></div>
+
+                <div className="checkout-summary-total">
+                  <span>Total</span>
+
+                  <strong>
+                    ${formatPrice(totalPrice)}
+                  </strong>
+                </div>
+
+                {customerInfo.paymentMethod !==
+                  "paypal" && (
+                  <button
+                    type="submit"
+                    className="checkout-place-order-button"
+                  >
+                    Place Order
+                    <i className="fa fa-arrow-right"></i>
+                  </button>
+                )}
+
+                <Link
+                  to="/cart"
+                  className="checkout-back-cart-button"
+                >
+                  <i className="fa fa-arrow-left"></i>
+                  Back to Cart
+                </Link>
+
+                <div className="checkout-security-note">
+                  <i className="fa fa-lock"></i>
+
+                  <span>
+                    Your payment information is protected.
+                  </span>
+                </div>
               </div>
+            </aside>
+          </form>
 
-              {customerInfo.paymentMethod ===
-                "paypal" && (
-                  <Payment
-                    createPayPalOrder={createPayPalOrder}
-                    handleEventPayPal={handlePayPalSuccess}
-                    handlePaymentCancel={() => {
-                      toast.info("Payment was cancelled.");
-                    }}
-                    handlePaymentError={(error) => {
-                      console.error(error);
-                      toast.error("PayPal payment error.");
-                    }}
-                    restaurantOrderId={restaurantOrderId}
-                    isCreatingPayment={isCreatingPayment}
-                  />
-                )}
+          <div className="checkout-help-card">
+            <div className="checkout-help-icon">
+              <i className="fa fa-headphones"></i>
+            </div>
 
-              {customerInfo.paymentMethod !==
-                "paypal" && (
-                  <div className="button-container">
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                    >
-                      Place Order
-                    </button>
-                  </div>
-                )}
-            </form>
+            <div>
+              <h3>Need help completing your order?</h3>
+
+              <p>
+                Contact our support team at{" "}
+                <strong>12345678</strong> if you experience any
+                checkout or payment issues.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <ToastContainer />
     </LayoutPages>

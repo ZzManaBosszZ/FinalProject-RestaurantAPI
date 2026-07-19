@@ -70,7 +70,6 @@ const privateRoutes = [
 
 const authenticationRoutes = [
     { path: config.routes.login, component: Login },
-    // { path: config.routes.register, component: Register },
     { path: config.routes.forgot_password, component: ForgotPassWord },
     { path: config.routes.reset_password, component: ResetPassword },
 

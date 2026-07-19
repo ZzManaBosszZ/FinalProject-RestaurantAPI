@@ -51,6 +51,7 @@ function HeaderPages({ onCartUpdate }) {
               <li className="dropdown">
                 <a href="#" className="dropdown-toggle" data-toggle="dropdown">Pages</a>
                 <ul className="dropdown-menu">
+                  <li><a href="/orderList">Order List</a></li>
                   <li><a href="/about">About Us</a></li>
                   <li><a href="/chef">Our Chef</a></li>
                   <li className="dropdown">

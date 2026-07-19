@@ -50,7 +50,7 @@ const url = {
     },
 
     ORDER: {
-        LIST: "orders",
+        LIST: "orders/my-orders",
         DETAIL: "order-details/{}",
         CREATE: "orders",
     },
