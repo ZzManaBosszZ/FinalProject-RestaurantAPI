@@ -63,7 +63,15 @@ const url = {
 
     WISHLIST :{
         LIST : "wishlist",
-    }
+    },
+
+    PAYMENT :{
+    CREATE: "payment",
+    CREATE_PAYPAL_ORDER: (orderId) =>
+        `payments/paypal/orders/${orderId}`,
+    CAPTURE_PAYPAL_ORDER: (paypalOrderId) =>
+    `payments/paypal/orders/${paypalOrderId}/capture`,
+}
 
     
 
